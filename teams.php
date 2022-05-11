@@ -248,7 +248,7 @@ class TeamsPlugin extends Plugin {
             ]
         ];
         if($this->getConfig()->get('teams-message-display')) {
-            array_push($message['sections'], ['text' => $ticket->getMessages()[0]->getBody()->getClean()]);
+            array_push($message['sections'], ['text' => $ticket->getLastMessage()->getBody()->getClean()]);
         }
 
         return json_encode($message, JSON_UNESCAPED_SLASHES);
