@@ -31,12 +31,12 @@ class TeamsPlugin extends Plugin {
      */
     function onTicketCreated(Ticket $ticket) {
         global $cfg;
-        $type = 'Issue created: ';
         if (!$cfg instanceof OsticketConfig) {
             error_log("Teams plugin called too early.");
             return;
         }
 
+        $type = $ticket->getNumber() . ' created: ';
         $this->sendToTeams($ticket, $type);
     }
 
@@ -48,7 +48,6 @@ class TeamsPlugin extends Plugin {
      * @return type
      */
     function onTicketUpdated(ThreadEntry $entry) {
-        $type = 'Issue Updated: ';
         global $cfg;
         if (!$cfg instanceof OsticketConfig) {
             error_log("Slack plugin called too early.");
@@ -72,6 +71,7 @@ class TeamsPlugin extends Plugin {
             return;
         }
 
+        $type = $ticket->getNumber() . ' updated: ';
         $this->sendToTeams($ticket, $type, 'warning');
     }
 
@@ -81,8 +81,7 @@ class TeamsPlugin extends Plugin {
      * @global osTicket $ost
      * @global OsticketConfig $cfg
      * @param Ticket $ticket
-     * @param string $heading
-     * @param string $body
+     * @param string $type
      * @param string $colour
      * @throws \Exception
      */
@@ -237,7 +236,7 @@ class TeamsPlugin extends Plugin {
             'potentialAction' => [
                 [
                     '@type' => 'OpenUri',
-                    'name' => 'View in osTicket',
+                    'name' => 'View ' . $ticket->getNumber(),
                     'targets' => [
                         [
                             'os' => 'default',
