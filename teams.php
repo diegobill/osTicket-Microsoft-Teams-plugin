@@ -50,7 +50,7 @@ class TeamsPlugin extends Plugin {
     function onTicketUpdated(ThreadEntry $entry) {
         global $cfg;
         if (!$cfg instanceof OsticketConfig) {
-            error_log("Slack plugin called too early.");
+            error_log("Teams plugin called too early.");
             return;
         }
         if (!$entry instanceof MessageThreadEntry) {
@@ -245,7 +245,7 @@ class TeamsPlugin extends Plugin {
             ]
         ];
         if($this->getConfig()->get('teams-message-display')) {
-            array_push($message['sections'], ['text' => $ticket->getLastMessage()->getBody()->getClean()]);
+            array_push($message['sections'], ['text' => trim(substr($ticket->getLastMessage()->getBody()->getClean(), 0, 300)) . '...']);
         }
 
         return json_encode($message, JSON_UNESCAPED_SLASHES);
