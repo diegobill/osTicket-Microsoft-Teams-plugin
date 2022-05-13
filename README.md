@@ -2,9 +2,7 @@
 
 An plugin for [osTicket](https://osticket.com) which posts notifications to a [Microsoft Teams](https://products.office.com/en-us/microsoft-teams/group-chat-software) channel.
 
-Forked from [https://github.com/ipavlovi/osTicket-Microsoft-Teams-plugin](https://github.com/ipavlovi/osTicket-Microsoft-Teams-plugin).
-
-Originally forked from [https://github.com/clonemeagain/osticket-slack](https://github.com/clonemeagain/osticket-slack).
+Forked from [https://github.com/ipavlovi/osTicket-Microsoft-Teams-plugin](https://github.com/ipavlovi/osTicket-Microsoft-Teams-plugin) which was originally forked from [https://github.com/clonemeagain/osticket-slack](https://github.com/clonemeagain/osticket-slack).
 
 ## Info
 
@@ -16,8 +14,6 @@ This plugin uses CURL and was designed/tested with osTicket 1.14 and 1.15.
 - An Office 365 account
 
 ## Install
-
----
 
 1. Clone this repo or download the zip file and place the contents into your `include/plugins` folder.
 2. Now the plugin needs to be enabled & configured, so login to osTicket, select "Admin Panel" then "Manage -> Plugins" you should be seeing the list of currently installed plugins.
