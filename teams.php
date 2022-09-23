@@ -91,7 +91,12 @@ class TeamsPlugin extends Plugin {
             error_log("Teams plugin called too early.");
             return;
         }
-        $url = $this->getConfig()->get('teams-webhook-url');
+        error_log("Ticket getSourceEmail: " . $ticket->getSourceEmail());
+        if ($ticket->getSourceEmail() && $ticket->getSourceEmail()->getEmail() == $this->getConfig()->get('teams-webhook-email-alternative')) {
+            $url = $this->getConfig()->get('teams-webhook-url-alternative');
+        } else {
+            $url = $this->getConfig()->get('teams-webhook-url');
+        }
         if (!$url) {
             $ost->logError('Teams Plugin not configured', 'You need to read the Readme and configure a webhook URL before using this.');
         }
@@ -135,38 +140,6 @@ class TeamsPlugin extends Plugin {
             error_log('Error posting to Teams. ' . $e->getMessage());
         } finally {
             curl_close($ch);
-        }
-        if ($ticket->getSourceEmail() && $ticket->getSourceEmail()->getEmail() == $this->getConfig()->get('teams-webhook-email-alternative')) {
-            $url_alternative = $this->getConfig()->get('teams-webhook-url-alternative');
-            try {
-                // Setup curl
-                $ch = curl_init($url_alternative);
-                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
-                curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
-                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-                        'Content-Type: application/json',
-                        'Content-Length: ' . strlen($payload))
-                );
-    
-                // Actually send the payload to Teams:
-                if (curl_exec($ch) === false) {
-                    throw new \Exception($url_alternative . ' - ' . curl_error($ch));
-                } else {
-                    $statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-                    if ($statusCode != '200') {
-                        throw new \Exception(
-                            'Error sending to: ' . $url_alternative
-                            . ' Http code: ' . $statusCode
-                            . ' curl-error: ' . curl_errno($ch));
-                    }
-                }
-            } catch (\Exception $e) {
-                $ost->logError('Teams posting issue!', $e->getMessage(), true);
-                error_log('Error posting to Teams. ' . $e->getMessage());
-            } finally {
-                curl_close($ch);
-            }
         }
     }
 

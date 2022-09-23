@@ -45,7 +45,7 @@ class TeamsPluginConfig extends PluginConfig {
             )),
             'teams-webhook-url-alternative'          => new TextboxField(array(
                 'label'         => $__('Webhook URL Alternative'),
-                'hint'          => $__('If the Webhook Email Alternative is the incoming email address so request this URL too'),
+                'hint'          => $__('If the Webhook Email Alternative is the incoming email address so request this URL'),
                 'configuration' => array(
                     'size'   => 100,
                     'length' => 700
@@ -53,7 +53,7 @@ class TeamsPluginConfig extends PluginConfig {
             )),
             'teams-webhook-email-alternative'          => new TextboxField(array(
                 'label'         => $__('Webhook Email Alternative'),
-                'hint'          => $__('If this is the incoming email address so request the Webhook URL Alternative too'),
+                'hint'          => $__('If this is the incoming email address so request the Webhook URL Alternative'),
                 'configuration' => array(
                     'size'   => 100,
                     'length' => 700
