@@ -11,69 +11,61 @@ require_once('config.php');
 class TeamsPlugin extends Plugin {
 
     var $config_class = "TeamsPluginConfig";
+    static $pluginInstance = null;
 
+    private function getPluginInstance(?int $id){
+	if($id && ($i = $this->getInstance($id)))
+	    return $i;
+
+	return $this->getInstances()->first();
+    }
     /**
      * The entrypoint of the plugin, keep short, always runs.
      */
     function bootstrap() {
+	self::$pluginInstance = self::getPluginInstance(null);
+
         // Listen for osTicket to tell us it's made a new ticket or updated
         // an existing ticket:
+
         Signal::connect('ticket.created', array($this, 'onTicketCreated'));
         Signal::connect('threadentry.created', array($this, 'onTicketUpdated'));
-        // Tasks? Signal::connect('task.created',array($this,'onTaskCreated'));
     }
 
-
-    /**
-     * @global $cfg
-     * @param Ticket $ticket
-     * @throws Exception
-     */
     function onTicketCreated(Ticket $ticket) {
-        global $cfg;
-        if (!$cfg instanceof OsticketConfig) {
-            error_log("Teams plugin called too early.");
-            return;
-        }
+	global $cfg;
+        
+	if(!$cfg instanceof OsTicketConfig){
+	    error_log("Teams Plugin calls too early.");
+	}
 
-        $type = $ticket->getNumber() . ' created: ';
-        $this->sendToTeams($ticket, $type);
+	$type = 'Issue created: ';
+
+	$this->sendToTeams($ticket, $type);
     }
 
-    /**
-     * What to do with an Updated Ticket?
-     *
-     * @global OsticketConfig $cfg
-     * @param ThreadEntry $entry
-     * @return type
-     */
     function onTicketUpdated(ThreadEntry $entry) {
-        global $cfg;
-        if (!$cfg instanceof OsticketConfig) {
-            error_log("Teams plugin called too early.");
-            return;
-        }
-        if (!$entry instanceof MessageThreadEntry) {
-            // this was a reply or a system entry.. not a message from a user
-            return;
-        }
+		$type = 'Issue Updated: ';
+		if (!$entry instanceof MessageThreadEntry) {
+		    // this was a reply or a system entry.. not a message from a user
+		    return;
+		}
 
-        // Need to fetch the ticket from the ThreadEntry
-        $ticket = $this->getTicket($entry);
-        if (!$ticket instanceof Ticket) {
-            // Admin created ticket's won't work here.
-            return;
-        }
+		// Need to fetch the ticket from the ThreadEntry
+		$ticket = $this->getTicket($entry);
+		if (!$ticket instanceof Ticket) {
+		    // Admin created ticket's won't work here.
+		    return;
+		}
 
-        // Check to make sure this entry isn't the first (ie: a New ticket)
-        $first_entry = $ticket->getMessages()[0];
-        if ($entry->getId() == $first_entry->getId()) {
-            return;
-        }
+		// Check to make sure this entry isn't the first (ie: a New ticket)
+		$first_entry = $ticket->getMessages()[0];
+		if ($entry->getId() == $first_entry->getId()) {
+		    return;
+		}
 
-        $type = $ticket->getNumber() . ' updated: ';
-        $this->sendToTeams($ticket, $type, 'warning');
-    }
+		$this->sendToTeams($ticket, $type, 'warning');
+	    }
 
     /**
      * A helper function that sends messages to teams endpoints.
@@ -81,22 +73,21 @@ class TeamsPlugin extends Plugin {
      * @global osTicket $ost
      * @global OsticketConfig $cfg
      * @param Ticket $ticket
-     * @param string $type
+     * @param string $heading
+     * @param string $body
      * @param string $colour
      * @throws \Exception
      */
     function sendToTeams(Ticket $ticket, $type, $colour = 'good') {
-        global $ost, $cfg;
-        if (!$ost instanceof osTicket || !$cfg instanceof OsticketConfig) {
-            error_log("Teams plugin called too early.");
-            return;
-        }
-        error_log("Ticket getSourceEmail: " . $ticket->getSourceEmail());
-        if ($ticket->getSourceEmail() && $ticket->getSourceEmail()->getEmail() == $this->getConfig()->get('teams-webhook-email-alternative')) {
-            $url = $this->getConfig()->get('teams-webhook-url-alternative');
-        } else {
-            $url = $this->getConfig()->get('teams-webhook-url');
-        }
+	global $ost,$cfg;
+
+	if(!$cfg instanceof OsTicketConfig){
+	    error_log("Teams Plugin calls too early.");
+	    return;
+	}
+
+	$url=$this->getConfig(self::$pluginInstance)->get('teams-webhook-url');
+
         if (!$url) {
             $ost->logError('Teams Plugin not configured', 'You need to read the Readme and configure a webhook URL before using this.');
         }
@@ -107,14 +98,28 @@ class TeamsPlugin extends Plugin {
         if ($regex_subject_ignore && preg_match("/$regex_subject_ignore/i", $ticket->getSubject())) {
             $ost->logDebug('Ignored Message', 'Teams notification was not sent because the subject (' . $ticket->getSubject() . ') matched regex (' . htmlspecialchars($regex_subject_ignore) . ').');
             return;
+        } else {
+            error_log("$ticket_subject didn't trigger $regex_subject_ignore");
         }
 
-        // Build the payload with the formatted data:
+		// Check the department id,  see if we want to filter it
+		$teams_csv_departmentid = explode(',',$this->getConfig()->get('teams-csv-departmentid'));
+		if(in_array($ticket->getDeptId(),$teams_csv_departmentid)){
+			$ost->logDebug('Ignored Message', 'Teams notification was not sent because the departmentID (' . $ticket->getDeptId() . ') matched (' . json_encode($teams_csv_departmentid) . ').');
+			return;
+		}
+		else{
+			error_log('DepartmentID: '.$ticket->getDeptId() ." didn't trigger ".json_encode($teams_csv_departmentid));
+		}
+
+
+		// Build the payload with the formatted data:
         $payload = $this->createJsonMessage($ticket, $type);
 
         try {
             // Setup curl
             $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, "false");
             curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
             curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -239,18 +244,27 @@ class TeamsPlugin extends Plugin {
             'potentialAction' => [
                 [
                     '@type' => 'OpenUri',
-                    'name' => 'View ' . $ticket->getNumber(),
+                    'name' => 'View in osTicket',
                     'targets' => [
                         [
                             'os' => 'default',
-                            'uri' => $cfg->getUrl() . '/scp/tickets.php?id=' . $ticket->getId(),
+                            'uri' => $cfg->getUrl() . 'scp/tickets.php?id=' . $ticket->getId(),
                         ]
                     ]
                 ]
             ]
         ];
         if($this->getConfig()->get('teams-message-display')) {
-            array_push($message['sections'], ['text' => trim(substr($ticket->getLastMessage()->getBody()->getClean(), 0, 300)) . '...']);
+            $msgArray = $ticket->getMessages();
+			$FirstMessage = $msgArray[0];
+			$LastMessage = $msgArray[count($msgArray)-1];
+			$msgText = $LastMessage;
+			// get the LAST/most recent message that went in, don't just repeat the first one.
+			if($msgText == null)
+			{
+				$msgText = $FirstMessage;
+			}
+			array_push($message['sections'], ['text' => $msgText->getBody()->getClean()]);
         }
 
         return json_encode($message, JSON_UNESCAPED_SLASHES);

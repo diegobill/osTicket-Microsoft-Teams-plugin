@@ -33,27 +33,11 @@ class TeamsPluginConfig extends PluginConfig {
 
         return array(
             'teams'                      => new SectionBreakField(array(
-                'label' => $__('Slack notifier'),
+                'label' => $__('Teams notifier'),
                 'hint'  => $__('Readme first: https://github.com/ipavlovi/osTicket-Microsoft-Teams-plugin')
             )),
             'teams-webhook-url'          => new TextboxField(array(
                 'label'         => $__('Webhook URL'),
-                'configuration' => array(
-                    'size'   => 100,
-                    'length' => 700
-                ),
-            )),
-            'teams-webhook-url-alternative'          => new TextboxField(array(
-                'label'         => $__('Webhook URL Alternative'),
-                'hint'          => $__('If the Webhook Email Alternative is the incoming email address so request this URL'),
-                'configuration' => array(
-                    'size'   => 100,
-                    'length' => 700
-                ),
-            )),
-            'teams-webhook-email-alternative'          => new TextboxField(array(
-                'label'         => $__('Webhook Email Alternative'),
-                'hint'          => $__('If this is the incoming email address so request the Webhook URL Alternative'),
                 'configuration' => array(
                     'size'   => 100,
                     'length' => 700
@@ -67,6 +51,14 @@ class TeamsPluginConfig extends PluginConfig {
                     'length' => 200
                 ],
             ]),
+			'teams-csv-departmentid' => new TextboxField([
+				'label'         => $__('Ignore department ids'),
+				'hint'          => $__('Comma delimited, ints'),
+				'configuration' => [
+					'size'   => 30,
+					'length' => 200
+				],
+			]),
             'teams-message-display' => new BooleanField([
                 'label' => $__('Display ticket message body in notification.'),
                 'hint' => $__('Uncheck to hide messages.'),
