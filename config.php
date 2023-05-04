@@ -34,10 +34,26 @@ class TeamsPluginConfig extends PluginConfig {
         return array(
             'teams'                      => new SectionBreakField(array(
                 'label' => $__('Teams notifier'),
-                'hint'  => $__('Readme first: https://github.com/ipavlovi/osTicket-Microsoft-Teams-plugin')
+                'hint'  => $__('Readme first: https://github.com/diegobill/osTicket-Microsoft-Teams-plugin')
             )),
             'teams-webhook-url'          => new TextboxField(array(
                 'label'         => $__('Webhook URL'),
+                'configuration' => array(
+                    'size'   => 100,
+                    'length' => 700
+                ),
+            )),
+            'teams-webhook-url-alternative'          => new TextboxField(array(
+                'label'         => $__('Webhook URL Alternative'),
+                'hint'          => $__('If the Webhook Email Alternative is the incoming email address so request this URL'),
+                'configuration' => array(
+                    'size'   => 100,
+                    'length' => 700
+                ),
+            )),
+            'teams-webhook-email-alternative'          => new TextboxField(array(
+                'label'         => $__('Webhook Email Alternative'),
+                'hint'          => $__('If this is the incoming email address so request the Webhook URL Alternative'),
                 'configuration' => array(
                     'size'   => 100,
                     'length' => 700

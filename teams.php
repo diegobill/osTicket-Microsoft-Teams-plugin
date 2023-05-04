@@ -86,7 +86,12 @@ class TeamsPlugin extends Plugin {
 	    return;
 	}
 
-	$url=$this->getConfig(self::$pluginInstance)->get('teams-webhook-url');
+	    error_log("Ticket getSourceEmail: " . $ticket->getSourceEmail());
+        if ($ticket->getSourceEmail() && $ticket->getSourceEmail()->getEmail() == $this->getConfig(self::$pluginInstance)->get('teams-webhook-email-alternative')) {
+            $url = $this->getConfig(self::$pluginInstance)->get('teams-webhook-url-alternative');
+        } else {
+            $url = $this->getConfig(self::$pluginInstance)->get('teams-webhook-url');
+        }
 
         if (!$url) {
             $ost->logError('Teams Plugin not configured', 'You need to read the Readme and configure a webhook URL before using this.');
@@ -248,7 +253,7 @@ class TeamsPlugin extends Plugin {
                     'targets' => [
                         [
                             'os' => 'default',
-                            'uri' => $cfg->getUrl() . 'scp/tickets.php?id=' . $ticket->getId(),
+                            'uri' => $cfg->getUrl() . '/scp/tickets.php?id=' . $ticket->getId(),
                         ]
                     ]
                 ]
